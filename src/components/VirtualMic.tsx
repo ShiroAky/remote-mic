@@ -1,6 +1,6 @@
 import { DriverGuard } from './DriverGuard'
 import { StatusBadge } from './StatusBadge'
-import { MicOff, Power, XIcon, Minus } from 'lucide-react'
+import { MicOff, Power, XIcon, Minus, NetworkIcon } from 'lucide-react'
 import { invoke } from '@tauri-apps/api/core'
 import { ConnectionStatus, AudioDevice } from '@/types'
 import { getCurrentWindow } from '@tauri-apps/api/window'
@@ -75,14 +75,9 @@ export const VirtualMicContent: React.FC = () => {
     const ws = new WebSocket(`ws://${address}`);
     wsRef.current = ws;
 
-    ws.onopen = () => {
-      // El servidor de señalización está listo para escuchar clientes
-      setStatus('connecting');
-    };
+    ws.onopen = () => setStatus('connecting');
 
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-    });
+    const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
     pcRef.current = pc;
 
     // Recibir audio desde el teléfono móvil
@@ -146,9 +141,7 @@ export const VirtualMicContent: React.FC = () => {
       }
 
       // Limpiar el audio del elemento de audio
-      if (audioRef.current) {
-        audioRef.current.srcObject = null;
-      }
+      if (audioRef.current) audioRef.current.srcObject = null;
 
       // 2. Invocar al backend de Rust para detener el servidor de señalización
       await invoke("stop_signaling_server");
@@ -172,9 +165,7 @@ export const VirtualMicContent: React.FC = () => {
       pcRef.current?.close();
 
       // Limpiar el audio del elemento de audio
-      if (audioRef.current) {
-        audioRef.current.srcObject = null;
-      }
+      if (audioRef.current) audioRef.current.srcObject = null;
 
       // Detener el servidor de señalización en el backend de Rust al desmontar
       stopServer();
@@ -184,7 +175,7 @@ export const VirtualMicContent: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-6 select-none">
 
-      <nav className='flex flex-row justify-between items-center absolute top-0 left-0 z-999 w-full py-2 px-4 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800 select-none' data-tauri-drag-region>
+      <nav className='flex flex-row justify-between items-center absolute top-0 left-0 z-999 w-full py-2 px-4 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800 select-none'>
         <h1>Remote Mic</h1>
         <div className='flex gap-2 z-50'>
             <button className='text-white text-base py-1 px-1 cursor-pointer' onClick={() => appWindow.minimize()}><Minus /></button>

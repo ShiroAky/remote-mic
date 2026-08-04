@@ -17,10 +17,10 @@ export default function App() {
     fetchDeviceType();
   }, []);
 
-  // data-tauri-drag-region 
+  //  
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-indigo-500 selection:text-white" data-tauri-drag-region>
       <main className="pt-12">
         { role === 'desktop' ? ( <VirtualMic /> ) : ( <MobileView /> ) }
       </main>
