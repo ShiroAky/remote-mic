@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { VirtualMic } from './components/VirtualMic';
 import { MobileView } from './components/MobileView';
+import VersionViewer from './components/ui/VersionViewer';
 import { invoke } from '@tauri-apps/api/core';
 import { AppRole } from './types';
 import './App.css';
@@ -26,9 +27,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-indigo-500 selection:text-white" onContextMenu={ContextMenuHandler}>
-      <main className="pt-12">
-        { role === 'desktop' ? ( <VirtualMic /> ) : ( <MobileView /> ) }
-      </main>
+
+      {/* Vista principal de la aplicación */}
+      <main className="pt-12">{ role === 'desktop' ? ( <VirtualMic /> ) : ( <MobileView /> ) }</main>
+
+      {/* Visualizador de numero de version de la aplicación */}
+      <VersionViewer />
+
+      {/* Toaster (Para notificaciones) */}
       <Toaster position='bottom-right' allowManualClose={ true } />
     </div>
   );

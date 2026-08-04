@@ -15,7 +15,7 @@ export const checkForUpdates = async (manualIfNoUpdate = false) => {
       console.log(`Notas del parche:\n ${update.body}`);
 
       // Notificar en la interfaz
-      toast(`Nueva versión ${update.version} disponible`, 'info', 6000);
+      toast(`Nueva versión ${update.version} disponible`, 'info', 10000);
 
       // Confirmar con el usuario
       const confirm = window.confirm(
@@ -29,17 +29,16 @@ export const checkForUpdates = async (manualIfNoUpdate = false) => {
         
         // Descarga e instala el binario
         await update.downloadAndInstall();
-        
         toast('Actualización lista. Reiniciando aplicación...', 'success', 3000);
         
         // Reinicia la app para aplicar la nueva versión
         await relaunch();
       }
     } else {
-      console.log('La aplicación ya está actualizada.');
+      // console.log('La aplicación ya está actualizada.');
 
-      toast('Prueba realizada perfectamente', 'info', 10000)
-      
+      toast('La aplicación ya está actualizada.', 'info', 10000)
+
       if (manualIfNoUpdate) {
         toast('Ya estás en la versión más reciente.', 'success', 4000);
       }
