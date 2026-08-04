@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function MobileView({ pcIp: initialPcIp }: { pcIp?: string }) {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');

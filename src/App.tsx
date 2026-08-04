@@ -5,6 +5,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { AppRole } from './types';
 import './App.css';
 
+import { Toaster } from './components/ui/Toaster'
+
 export default function App() {
   const [role, setRole] = useState<AppRole>('desktop');
 
@@ -20,10 +22,11 @@ export default function App() {
   //  
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-indigo-500 selection:text-white" data-tauri-drag-region>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-indigo-500 selection:text-white">
       <main className="pt-12">
         { role === 'desktop' ? ( <VirtualMic /> ) : ( <MobileView /> ) }
       </main>
+      <Toaster position='bottom-right' allowManualClose={ true } />
     </div>
   );
 }

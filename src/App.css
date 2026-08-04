@@ -7,3 +7,12 @@
 input, button, select {
   @apply cursor-pointer;
 }
+
+@layer components {
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+  .no-drag-region {
+    -webkit-app-region: no-drag;
+  }
+}

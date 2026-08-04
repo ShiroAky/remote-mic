@@ -1,5 +1,7 @@
 import React from 'react';
+import TitleBarComponent from './ui/titlebar';
 import { useDriverCheck } from '../hooks/useDriverCheck';
+import { CloudDownloadIcon, GlobeIcon } from 'lucide-react'
 
 export const DriverGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { status, errorMsg, checkDriver, installDriver } = useDriverCheck();
@@ -7,8 +9,13 @@ export const DriverGuard: React.FC<{ children: React.ReactNode }> = ({ children 
   if (status === 'installed') return <>{children}</>;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl space-y-6">
+    <div className="max-w-200 max-h-150 bg-zinc-950 text-zinc-100 flex items-center justify-center p-4">
+
+      {/* Titlebar */}
+      <TitleBarComponent />
+
+      {/* Driver Guard */}
+      <div className="max-w-130 w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl space-y-6">
         
         <div className="flex items-center space-x-3 border-b border-zinc-800 pb-4">
           <div className="w-3 h-3 rounded-full bg-indigo-500 animate-pulse" />
@@ -22,19 +29,30 @@ export const DriverGuard: React.FC<{ children: React.ReactNode }> = ({ children 
           </div>
         )}
 
-        {status === 'not_installed' && (
+        {status === 'installing' && (
           <div className="space-y-4">
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-amber-300 text-xs leading-relaxed">
-              <p className="font-semibold mb-1 text-sm">Controlador No Detectado</p>
-              Para reenviar el audio como un micrófono de hardware en la PC, es necesario instalar el controlador oficial de VB-Cable.
+              <p className="font-semibold mb-1 text-sm">Controlador no detectado</p>
+              <p>Para reenviar el audio como un micrófono de hardware en la PC, es necesario instalar el controlador oficial de VB-Cable.</p>
             </div>
 
-            <button
-              onClick={installDriver}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-sm font-medium rounded-xl transition shadow-lg shadow-indigo-600/25"
-            >
-              Instalar VB-Cable Automáticamente
-            </button>
+            <div className='flex flex-col gap-7'>
+              <a href="https://vb-audio.com/Cable/" target='_blank' className='text-cyan-300'>
+                <button className="w-full flex flex-row gap-1.5 items-center justify-center py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-sm font-medium rounded-xl transition shadow-lg shadow-indigo-600/25"><GlobeIcon /> Haga clic para ir a su sitio oficial</button>
+              </a>
+
+              <div className='w-full flex flex-row gap-1.5 items-center justify-center'>
+                <div className='w-full h-px bg-gray-600'></div>
+                <p>O</p>
+                <div className='w-full h-px bg-gray-600'></div>
+              </div>
+
+              <button
+                onClick={installDriver}
+                className="w-full flex flex-row gap-1.5 items-center justify-center py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-sm font-medium rounded-xl transition shadow-lg shadow-indigo-600/25">
+                <CloudDownloadIcon /> Instalar VB-Cable Automáticamente
+              </button>
+            </div>
           </div>
         )}
 
@@ -69,12 +87,7 @@ export const DriverGuard: React.FC<{ children: React.ReactNode }> = ({ children 
               <p className="font-semibold mb-1">Error</p>
               {errorMsg}
             </div>
-            <button
-              onClick={checkDriver}
-              className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium rounded-xl transition"
-            >
-              Reintentar
-            </button>
+            <button onClick={checkDriver} className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium rounded-xl transition">Reintentar</button>
           </div>
         )}
       </div>
