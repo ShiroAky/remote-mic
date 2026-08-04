@@ -3,7 +3,13 @@ name: "Release App"
 on:
   push:
     tags:
-      - 'v*' # Se ejecuta al hacer push de un tag como v1.0.0, v1.0.1, etc.
+      - 'v*'
+
+# 1. Agregar permisos a nivel global del workflow
+permissions:
+  contents: write
+  packages: write
+  id-token: write
 
 jobs:
   release:
