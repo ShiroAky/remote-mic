@@ -20,7 +20,8 @@
         "resizable": false,
         "titleBarStyle": "Transparent",
         "shadow": true,
-        "maximizable": false
+        "maximizable": false,
+        "devtools": false
       }
     ],
     "trayIcon": {
