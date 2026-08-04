@@ -19,8 +19,9 @@
         "decorations": false,
         "devtools": false,
         "resizable": false,
-        "titleBarStyle": "Transparent"
-
+        "titleBarStyle": "Transparent",
+        "shadow": true,
+        "maximizable": false
       }
     ],
     "security": {

@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { DriverGuard } from './DriverGuard';
-import { StatusBadge } from './StatusBadge';
-import { ConnectionStatus, AudioDevice } from '@/types';
+import { DriverGuard } from './DriverGuard'
+import { StatusBadge } from './StatusBadge'
+import { MicOff, Power, XIcon, Minus } from 'lucide-react'
+import { invoke } from '@tauri-apps/api/core'
+import { ConnectionStatus, AudioDevice } from '@/types'
+import { getCurrentWindow } from '@tauri-apps/api/window'
+import React, { useState, useEffect, useRef } from 'react'
 
+// VirtualMicContent es el componente principal que maneja la lógica del micrófono virtual y la conexión WebRTC.
 export const VirtualMicContent: React.FC = () => {
   const [serverAddr, setServerAddr] = useState<string | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
@@ -15,6 +18,8 @@ export const VirtualMicContent: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+
+  const appWindow = getCurrentWindow();
 
   const refreshAudioDevices = async () => {
     try {
@@ -125,15 +130,68 @@ export const VirtualMicContent: React.FC = () => {
     };
   };
 
+  const stopServer = async () => {
+    try {
+
+      // 1. Cerrar WebRTC y WebSocket en el cliente JS local
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+
+      // Cerrar WebSocket y limpiar la referencia
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
+      // Limpiar el audio del elemento de audio
+      if (audioRef.current) {
+        audioRef.current.srcObject = null;
+      }
+
+      // 2. Invocar al backend de Rust para detener el servidor de señalización
+      await invoke("stop_signaling_server");
+      console.log('Servidor detenido');
+
+      // 3. Actualizar el estado de la UI
+      setStatus('disconnected');
+      setActiveClients(0);
+      setServerAddr(null);
+
+    } catch (error) {
+      console.error('Error al detener el servidor:', error);
+    }
+  };
+
+  // Cerrar conexiones al desmontar el componente
   useEffect(() => {
     return () => {
+      // Cerrar conexiones WebSocket y WebRTC al desmontar el componente
       wsRef.current?.close();
       pcRef.current?.close();
+
+      // Limpiar el audio del elemento de audio
+      if (audioRef.current) {
+        audioRef.current.srcObject = null;
+      }
+
+      // Detener el servidor de señalización en el backend de Rust al desmontar
+      stopServer();
     };
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
+    <div className="max-w-2xl mx-auto p-6 space-y-6 select-none">
+
+      <nav className='flex flex-row justify-between items-center absolute top-0 left-0 z-999 w-full py-2 px-4 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800 select-none' data-tauri-drag-region>
+        <h1>Remote Mic</h1>
+        <div className='flex gap-2 z-50'>
+            <button className='text-white text-base py-1 px-1 cursor-pointer' onClick={() => appWindow.minimize()}><Minus /></button>
+            <button className='text-white text-base py-1 px-1 cursor-pointer' onClick={() => appWindow.close()}><XIcon /></button>
+        </div>
+      </nav>
+
       <header className="flex items-center justify-between border-b border-zinc-800 pb-4">
         <div>
           <h1 className="text-xl font-bold text-white tracking-tight">Micrófono Virtual</h1>
@@ -142,11 +200,9 @@ export const VirtualMicContent: React.FC = () => {
         <StatusBadge status={status} />
       </header>
 
-      {!serverAddr ? (
+      {!serverAddr || status === 'disconnected' ? (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center space-y-4 shadow-xl">
-          <div className="w-12 h-12 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto text-xl font-mono">
-            🎙️
-          </div>
+          <div className="w-12 h-12 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto text-xl font-mono"><MicOff /></div>
           <div>
             <h3 className="text-base font-semibold text-zinc-100">Servidor Apagado</h3>
             <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
@@ -155,9 +211,8 @@ export const VirtualMicContent: React.FC = () => {
           </div>
           <button
             onClick={startServer}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/25 transition"
-          >
-            Iniciar Servidor de Señalización
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2 mx-auto">
+            <Power /> Iniciar Servidor
           </button>
         </div>
       ) : (
@@ -169,7 +224,7 @@ export const VirtualMicContent: React.FC = () => {
             <div className="md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex items-center justify-between shadow-md">
               <div>
                 <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono block mb-1">
-                  Dirección Servidor WebSocket
+                  Dirección Servidor
                 </span>
                 <p className="text-lg font-mono text-amber-400 font-bold tracking-wide">{serverAddr}</p>
               </div>
@@ -200,7 +255,7 @@ export const VirtualMicContent: React.FC = () => {
 
           {/* Configuración de Audio */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4 shadow-md">
-            <div>
+            {/* <div>
               <label className="text-xs text-zinc-400 font-medium block mb-2">
                 Dispositivo de Salida (Enrutador VB-Cable)
               </label>
@@ -219,7 +274,7 @@ export const VirtualMicContent: React.FC = () => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
 
             <div className="pt-2 border-t border-zinc-800/60">
               <div className="flex justify-between items-center mb-2">
@@ -240,6 +295,14 @@ export const VirtualMicContent: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Boton de finalización de la conexión */}
+          <button
+            onClick={stopServer}
+            className="px-6 py-3 bg-red-600 hover:bg-red-500 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 transition flex items-center justify-center gap-2 mx-auto"
+          >
+            <Power /> Detener Conexión
+          </button>
         </div>
       )}
 
