@@ -5,13 +5,9 @@ import TitleBarComponent from './ui/titlebar'
 import StartServerComponent from './ui/startServer'
 import { ActiveDashboard } from './ui/ActiveDashboard'
 import { useWebRTCServer } from '../hooks/useWebRTCServer'
-import { checkForUpdates } from '../hooks/checkForUpdates'
 
 export const VirtualMicContent: React.FC = () => {
   const { serverAddr, status, activeClients, volume, audioRef, handleVolumeChange, startServer, stopServer } = useWebRTCServer();
-
-  // Busqueda de actualizaciones:
-  useEffect(() => { checkForUpdates(false) }, []);
 
   // Verificación
   const isServerActive = serverAddr && status !== 'disconnected';

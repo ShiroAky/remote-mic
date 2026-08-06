@@ -11,7 +11,7 @@ export function useDriverCheck() {
     setStatus('checking');
     setErrorMsg(null);
     try {
-      const isInstalled = await invoke<boolean>('check_vbcable_powershell');
+      const isInstalled = await invoke<boolean>('is_vbcable_installed');
       setStatus(isInstalled ? 'installed' : 'not_installed');
     } catch (err) {
       setStatus('error');

@@ -36,9 +36,6 @@ export const checkForUpdates = async (manualIfNoUpdate = false) => {
       }
     } else {
       // console.log('La aplicación ya está actualizada.');
-
-      toast('La aplicación ya está actualizada.', 'info', 10000)
-
       if (manualIfNoUpdate) {
         toast('Ya estás en la versión más reciente.', 'success', 4000);
       }

@@ -3,43 +3,36 @@ use std::fs;
 use std::io::Cursor;
 use std::process::Command;
 
-/// Comprueba si VB-Cable está presente en los dispositivos de sonido de Windows usando PowerShell.
+#[cfg(target_os = "windows")]
+use winreg::enums::*;
+#[cfg(target_os = "windows")]
+use winreg::RegKey;
+
+/// Comprueba si VB-Cable está presente en los dispositivos de sonido de Windows.
 #[tauri::command]
-pub fn check_vbcable_powershell() -> bool {
-    if !cfg!(target_os = "windows") {
-        return false;
-    }
+pub async fn is_vbcable_installed() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        let hkim = RegKey::predef(HKEY_LOCAL_MACHINE);
 
-    let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            "Get-CimInstance Win32_SoundDevice | Where-Object { $_.Name -like '*VB-Audio*' }",
-        ])
-        .output();
-
-    match output {
-        Ok(out) => {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            !stdout.trim().is_empty()
+        // Verificación de existencia del servicio:
+        if hkim.open_subkey("SYSTEM\\CurrentControlSet\\Services\\vbcable").is_ok() {
+            return true;
         }
-        Err(_) => false,
-    }
-}
 
-/// Parsea el HTML de vb-audio.com para obtener la URL dinámica del ZIP.
-// fn extract_zip_link(html: &str) -> Option<String> {
-//     html.split("href=\"")
-//         .find(|s| s.contains("VBCABLE_Driver_Pack45") && s.contains(".zip"))
-//         .and_then(|s| s.split('"').next())
-//         .map(|link| {
-//             if link.starts_with("https") {
-//                 link.to_string()
-//             } else {
-//                 format!("https://vb-audio.com/Cable/{}", link)
-//             }
-//         })
-// }
+        // Verificación alternativa en las claves de desinstalación de windows:
+        let uninstall_path = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+        if let Ok(uninstall_key) = hkim.open_subkey(uninstall_path) {
+            for subkey_name in uninstall_key.enum_keys().filter_map(Result::ok) {
+                if subkey_name.contains("VB:DirectX-VBCABLE") || subkey_name.contains("VBCABLE") {
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
+}
 
 /// Descarga el ZIP oficial de VB-Cable, lo descomprime en TEMP y lo instala con permisos de Administrador (UAC).
 #[tauri::command]

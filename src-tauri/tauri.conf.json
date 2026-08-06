@@ -25,7 +25,9 @@
       }
     ],
     "trayIcon": {
-      "iconPath": "icons/icon.ico"
+      "iconPath": "icons/icon.ico",
+      "title": "Remote Mic",
+      "showMenuOnLeftClick": true
     },
     "security": {
       "csp": null

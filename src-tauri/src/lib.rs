@@ -23,7 +23,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             network::get_local_ip,
             network::start_signaling_server,
-            vbcable::check_vbcable_powershell,
+            vbcable::is_vbcable_installed,
             vbcable::install_virtual_cable,
             network::stop_signaling_server,
             get_device_type
