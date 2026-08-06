@@ -5,7 +5,6 @@ on:
     tags:
       - 'v*'
 
-# 1. Agregar permisos a nivel global del workflow
 permissions:
   contents: write
   packages: write
