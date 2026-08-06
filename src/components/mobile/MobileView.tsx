@@ -1,37 +1,25 @@
-import { useWebRtcStream } from './useWebRtcStream';
+import { useWebRtcStream } from './hooks/useWebRtcStream';
 import { StatusBadge } from './StatusBadge';
 import { MicIcon } from './MicIcon';
 import { GitCompareArrowsIcon } from 'lucide-react'
 import { getVersion } from '@tauri-apps/api/app'
+import { useWakeLock } from './hooks/useWakeLock'
 
 // Numero de versión de la aplicación:
 const version = await getVersion()
 
 export function MobileView({ pcIp }: { pcIp?: string }) {
-  const {
-    status,
-    errorMessage,
-    targetIp,
-    setTargetIp,
-    startStreaming,
-    stopStreaming,
-  } = useWebRtcStream({ initialPcIp: pcIp });
-
+  const { status, errorMessage, targetIp, setTargetIp, startStreaming, stopStreaming } = useWebRtcStream({ initialPcIp: pcIp });
   const isConnectingOrConnected = status === 'connected' || status === 'connecting';
 
+  useWakeLock(status === 'connected')
+
   return (
-    <div 
-      className="flex flex-col min-h-screen w-full bg-slate-900 text-white overflow-y-auto select-none box-border px-5"
-      style={{
-        paddingTop: 'calc(env(safe-area-inset-top) + 12px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)',
-      }}
-    >
+    <div className="flex flex-col min-h-screen w-full bg-slate-900 text-white overflow-y-auto select-none box-border px-5"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }} >
       {/* Header */}
       <header className="flex-none flex items-center justify-between py-3 border-b border-slate-800">
-        <span className="font-semibold text-sm tracking-wide text-slate-300">
-          Remote Mic
-        </span>
+        <span className="font-semibold text-sm tracking-wide text-slate-300">Remote Mic</span>
         <StatusBadge status={status} />
       </header>
 
