@@ -1,4 +1,4 @@
-import { StreamStatus } from './hooks/useWebRtcStream';
+import { StreamStatus } from './useWebRtcStream';
 
 const styleConfig: Record<StreamStatus, { container: string; icon: string }> = {
   connected: {

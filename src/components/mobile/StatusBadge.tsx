@@ -1,4 +1,4 @@
-import { StreamStatus } from './hooks/useWebRtcStream';
+import { StreamStatus } from './useWebRtcStream';
 
 const statusConfig: Record<StreamStatus, { label: string; dotClass: string }> = {
   connected: { label: 'En Vivo', dotClass: 'bg-emerald-500 animate-pulse' },
