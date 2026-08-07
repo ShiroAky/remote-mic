@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { DriverGuard } from './DriverGuard'
 import { StatusBadge } from './StatusBadge'
 import TitleBarComponent from './ui/titlebar'
