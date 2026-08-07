@@ -15,9 +15,7 @@ export default function TitleBarComponent() {
 
     return (
         <nav className='flex flex-row justify-between items-center absolute top-0 left-0 z-999 w-full py-2 px-4 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800 select-none drag-region'>
-
             <h1>Remote Mic</h1>
-
             <div className='flex gap-2 z-50 no-drag-region'>
                 <button className='text-white text-base py-1 px-1 cursor-pointer pointer-events-auto' onClick={() => WindowManager('minimize')}><Minus /></button>
                 <button className='text-white text-base py-1 px-1 cursor-pointer pointer-events-auto' onClick={() => WindowManager('close')}><XIcon /></button>
