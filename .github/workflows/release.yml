@@ -4,8 +4,8 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: 
 
+# 1. Agregar permisos a nivel global del workflow
 permissions:
   contents: write
   packages: write
