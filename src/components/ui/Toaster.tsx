@@ -276,7 +276,7 @@ export function Toaster({ position = "bottom-right", allowManualClose = true }: 
               <p className="text-xs font-semibold text-zinc-200 mb-0.5 uppercase tracking-wider">
                 {t.title || t.type}
               </p>
-              <p className="text-sm text-zinc-300 leading-normal whitespace-pre-line break-words">
+              <p className="text-sm text-zinc-300 leading-normal whitespace-pre-line words">
                 {t.message}
               </p>
             </div>
