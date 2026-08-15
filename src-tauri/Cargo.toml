@@ -1,6 +1,6 @@
 [package]
 name = "remote-mic"
-version = "1.0.4"
+version = "1.0.5"
 description = "A low-latency virtual microphone server that streams high-fidelity audio from mobile devices using WebRTC."
 authors = ["ShiroAky"]
 edition = "2021"

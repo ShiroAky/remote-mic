@@ -9,7 +9,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const styles: Record<ConnectionStatus, string> = {
     disconnected: 'bg-zinc-800 text-zinc-400 border-zinc-700',
     connecting: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    connected: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    connected: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 animate-pulse',
     error: 'bg-red-500/10 text-red-400 border-red-500/20',
   };
 
