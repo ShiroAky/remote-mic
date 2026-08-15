@@ -23,8 +23,7 @@ export const ActiveDashboard: React.FC<ActiveDashboardProps> = ({
       <ServerStatsCard serverAddr={serverAddr} activeClients={activeClients} />
       <AudioControlsCard volume={volume} onVolumeChange={onVolumeChange} />
 
-      <button
-        onClick={onStopServer}
+      <button onClick={onStopServer}
         className="px-6 py-3 bg-red-600 hover:bg-red-500 active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 transition flex items-center justify-center gap-2 mx-auto cursor-pointer"
       >
         <Power className="w-4 h-4" /> Detener Conexión
