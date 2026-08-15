@@ -5,11 +5,8 @@ on:
     tags:
       - 'v*'
 
-# 1. Agregar permisos a nivel global del workflow
 permissions:
   contents: write
-  packages: write
-  id-token: write
 
 jobs:
   release:
@@ -27,7 +24,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Cargar todo el historial de Git para poder comparar tags correctamente
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -50,22 +46,18 @@ jobs:
         id: commit_logs
         shell: pwsh
         run: |
-          # Intentar obtener el tag anterior a este
           $PREV_TAG = (git describe --tags --abbrev=0 "${{ github.ref_name }}^" 2>$null)
           
           if (-not $PREV_TAG) {
-            # Si no hay tag previa (es la versión 1.0.0 / primer release), obtener desde el primer commit
             $PREV_TAG = (git rev-list --max-parents=0 HEAD)
           }
 
-          # Extraer commits entre el tag anterior y la actual
           $CHANGELOG = (git log "$PREV_TAG..HEAD" --oneline --no-merges --pretty=format:"• %s")
 
           if (-not $CHANGELOG) {
             $CHANGELOG = "• Mejoras y correcciones menores en la aplicación."
           }
 
-          # Guardar el historial multilinea en el Output de GitHub Actions
           "CHANGELOG<<EOF" >> $env:GITHUB_OUTPUT
           $CHANGELOG >> $env:GITHUB_OUTPUT
           "EOF" >> $env:GITHUB_OUTPUT
