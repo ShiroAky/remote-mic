@@ -1,10 +1,10 @@
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { toast } from '../components/ui/Toaster';
+import { toast, removeToastGlobal } from '../components/ui/Toaster';
 
 /**
  * Función para comprobar y aplicar actualizaciones de la aplicación.
- * @param manualIfNoUpdate Si es true (e.g. cuando el usuario presiona un botón), muestra un toast notificando que ya está actualizado.
+ * @param manualIfNoUpdate Si es true, muestra un toast cuando no hay actualizaciones disponibles.
  */
 export const checkForUpdates = async (manualIfNoUpdate = false) => {
   try {
@@ -14,36 +14,58 @@ export const checkForUpdates = async (manualIfNoUpdate = false) => {
       console.log(`Nueva versión encontrada: ${update.version}`);
       console.log(`Notas del parche:\n ${update.body}`);
 
-      // Notificar en la interfaz
-      toast(`Nueva versión ${update.version} disponible`, 'info', 10000);
+      const updateMessage = update.body 
+        ? `Novedades v${update.version}:\n${update.body}` 
+        : `La versión ${update.version} ya está disponible para instalar.`;
 
-      // Confirmar con el usuario
-      const confirm = window.confirm(
-        `Nueva versión ${update.version} disponible.\n\n` +
-        `Novedades:\n${update.body || 'Sin notas de versión.'}\n\n` +
-        `¿Deseas descargar e instalar la actualización ahora?`
-      );
+      // Mostrar toast interactivo pidiendo confirmación
+      toast(updateMessage, {
+        type: "info",
+        title: `Actualización v${update.version}`,
+        actions: [
+          {
+            label: "Luego",
+            variant: "secondary",
+            onClick: () => {
+              console.log("El usuario pospuso la actualización.");
+            },
+          },
+          {
+            label: "Actualizar ahora",
+            variant: "primary",
+            onClick: async () => {
+              const loadingToastId = toast(
+                "Descargando e instalando actualización...", 
+                "loading"
+              );
 
-      if (confirm) {
-        toast('Descargando e instalando actualización...', 'loading', 15000);
-        
-        // Descarga e instala el binario
-        await update.downloadAndInstall();
-        toast('Actualización lista. Reiniciando aplicación...', 'success', 3000);
-        
-        // Reinicia la app para aplicar la nueva versión
-        await relaunch();
-      }
+              try {
+                // Descarga e instala el binario
+                await update.downloadAndInstall();
+                removeToastGlobal(loadingToastId);
+                
+                toast("Actualización lista. Reiniciando aplicación...", "success", 3000);
+                
+                // Reinicia la app para aplicar la nueva versión
+                await relaunch();
+              } catch (err) {
+                removeToastGlobal(loadingToastId);
+                console.error("Error durante la instalación:", err);
+                toast("Error al instalar la actualización.", "error", 4000);
+              }
+            },
+          },
+        ],
+      });
     } else {
-      // console.log('La aplicación ya está actualizada.');
       if (manualIfNoUpdate) {
-        toast('Ya estás en la versión más reciente.', 'success', 4000);
+        toast("Ya estás en la versión más reciente.", "success", 4000);
       }
     }
   } catch (error) {
-    console.error('Error al comprobar actualizaciones:', error);
+    console.error("Error al comprobar actualizaciones:", error);
     if (manualIfNoUpdate) {
-      toast('Error al comprobar actualizaciones.', 'error', 4000);
+      toast("Error al comprobar actualizaciones.", "error", 4000);
     }
   }
 };

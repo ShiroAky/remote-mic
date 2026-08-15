@@ -23,7 +23,7 @@ export default function App() {
     fetchDeviceType();
 
     // Busqueda de actualizaciones:
-    checkForUpdates(false)
+    role === 'desktop' ? checkForUpdates(false) : '';
   }, []);
 
   // Deshabilitador de menú contextual:

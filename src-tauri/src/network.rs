@@ -1,9 +1,10 @@
 use futures_util::{SinkExt, StreamExt};
 use local_ip_address::local_ip;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use tauri::State;
 use tokio::net::TcpListener;
 use tokio::sync::broadcast;
+use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
 
 // Estado global para almacenar el canal de apagado del servidor
 pub struct AppState {
@@ -26,14 +27,9 @@ pub async fn start_signaling_server(
         .map(|ip| ip.to_string())
         .map_err(|e| format!("Error al obtener la IP local para el servidor: {}", e))?;
 
-    // Canal de comunicación para mensajería entre clientes WebSocket
-    let (tx_ws, _rx_ws) = broadcast::channel(16);
-    let tx_ws = Arc::new(tx_ws);
-
-    // Canal de señalización para detener el servidor
+    let (tx_ws, _) = broadcast::channel::<tokio_tungstenite::tungstenite::Message>(100);
     let (tx_shutdown, mut rx_shutdown) = broadcast::channel::<()>(1);
 
-    // Guardar la señal de apagado en el estado de Tauri
     {
         let mut lock = state.shutdown_tx.lock().map_err(|e| e.to_string())?;
         *lock = Some(tx_shutdown.clone());
@@ -49,42 +45,55 @@ pub async fn start_signaling_server(
     tauri::async_runtime::spawn(async move {
         loop {
             tokio::select! {
-                // Acepta nuevas conexiones de clientes
                 res = listener.accept() => {
                     match res {
-                        Ok((stream, _)) => {
+                        Ok((stream, addr)) => {
                             let tx_ws = tx_ws.clone();
                             let mut rx_ws = tx_ws.subscribe();
                             let mut rx_close = tx_shutdown.subscribe();
 
-                            let ws_stream = match tokio_tungstenite::accept_async(stream).await {
-                                Ok(ws) => ws,
-                                Err(e) => {
-                                    eprintln!("Error al aceptar handshake WS: {}", e);
-                                    continue;
-                                }
-                            };
-
-                            let (mut write, mut read) = ws_stream.split();
-
-                            // Tarea para leer mensajes del socket y retransmitirlos
-                            tokio::spawn(async move {
-                                while let Some(msg) = read.next().await {
-                                    if let Ok(msg) = msg {
-                                        let _ = tx_ws.send(msg);
+                            tauri::async_runtime::spawn(async move {
+                                let ws_stream = match tokio_tungstenite::accept_hdr_async(
+                                    stream,
+                                    |_req: &Request, response: Response| Ok(response),
+                                ).await {
+                                    Ok(ws) => ws,
+                                    Err(e) => {
+                                        eprintln!("❌ Handshake WS fallido desde {}: {:?}", addr, e);
+                                        return;
                                     }
-                                }
-                            });
+                                };
 
-                            // Tarea para enviar mensajes al socket o cerrar en shutdown
-                            tokio::spawn(async move {
+                                println!("✅ Cliente conectado desde: {}", addr);
+
+                                let (mut write, mut read) = ws_stream.split();
+
                                 loop {
                                     tokio::select! {
-                                        Ok(msg) = rx_ws.recv() => {
-                                            if write.send(msg).await.is_err() {
-                                                break;
+                                        // Leer mensajes entrantes del cliente
+                                        msg = read.next() => {
+                                            match msg {
+                                                Some(Ok(msg)) => {
+                                                    // Evitar retransmitir Pings/Pongs/Closes manualmente
+                                                    if msg.is_text() || msg.is_binary() {
+                                                        let _ = tx_ws.send(msg);
+                                                    }
+                                                }
+                                                _ => {
+                                                    println!("🔌 Cliente desconectado: {}", addr);
+                                                    break;
+                                                }
                                             }
                                         }
+                                        // Recibir mensajes del broadcast y enviarlos al cliente
+                                        msg = rx_ws.recv() => {
+                                            if let Ok(msg) = msg {
+                                                if write.send(msg).await.is_err() {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        // Cerrar socket si se apaga el servidor
                                         _ = rx_close.recv() => {
                                             let _ = write.close().await;
                                             break;
@@ -93,12 +102,11 @@ pub async fn start_signaling_server(
                                 }
                             });
                         }
-                        Err(e) => eprintln!("Error al aceptar conexión TCP: {}", e),
+                        Err(e) => eprintln!("Error TCP: {}", e),
                     }
                 }
-                // Se detiene el listener principal cuando llega la señal de apagado
                 _ = rx_shutdown.recv() => {
-                    println!("Servidor WebSocket detenido correctamente.");
+                    println!("Servidor WebSocket detenido.");
                     break;
                 }
             }
