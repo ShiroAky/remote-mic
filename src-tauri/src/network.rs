@@ -1,9 +1,10 @@
-use futures_util::{SinkExt, StreamExt};
-use local_ip_address::local_ip;
-use std::sync::Mutex;
 use tauri::State;
-use tokio::net::TcpListener;
+use std::sync::Mutex;
+use std::process::Command;
 use tokio::sync::broadcast;
+use tokio::net::TcpListener;
+use local_ip_address::local_ip;
+use futures_util::{SinkExt, StreamExt};
 use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
 
 // Estado global para almacenar el canal de apagado del servidor
@@ -18,11 +19,34 @@ pub fn get_local_ip() -> Result<String, String> {
         .map_err(|e| format!("No se pudo detectar la IP local: {}", e))
 }
 
+pub fn ensure_firewall_rule() {
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(exe_path) = std::env::current_exe() {
+            let exe_str = exe_path.to_string_lossy();
+
+            // Comando PowerShell para crear o reemplazar la regla apuntando al ejecutable dinámicamente
+            let script = format!(
+                "Remove-NetFirewallRule -DisplayName 'Remote Mic Server' -ErrorAction SilentlyContinue; New-NetFirewallRule -DisplayName 'Remote Mic Server' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080 -Program '{}' -Profile Any",
+                exe_str
+            );
+
+            let _ = Command::new("powershell")
+                .args(["-NoProfile", "-Command", &script])
+                .output();
+        }
+    }
+}
+
 #[tauri::command]
 pub async fn start_signaling_server(
     _app_handle: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<String, String> {
+
+    // Reglas de firewall para evitar inconvenientes de red:
+    ensure_firewall_rule();
+
     let my_ip = local_ip()
         .map(|ip| ip.to_string())
         .map_err(|e| format!("Error al obtener la IP local para el servidor: {}", e))?;
